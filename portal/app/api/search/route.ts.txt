@@ -1,0 +1,25 @@
+import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs/promises';
+import path from 'path';
+
+export async function GET(req: NextRequest) {
+  const cedula = req.nextUrl.searchParams.get('cedula');
+  if (!cedula) {
+    return NextResponse.json({ error: 'Cédula requerida' }, { status: 400 });
+  }
+
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'data.json');
+    const fileContents = await fs.readFile(filePath, 'utf8');
+    const data = JSON.parse(fileContents);
+
+    const match = data.find((row: any) => row.CEDULA === cedula);
+    if (!match) {
+      return NextResponse.json({ error: 'No encontrado' }, { status: 404 });
+    }
+
+    return NextResponse.json(match);
+  } catch (error) {
+    return NextResponse.json({ error: 'Error en el servidor' }, { status: 500 });
+  }
+}
