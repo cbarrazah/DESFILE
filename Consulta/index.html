@@ -1,43 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consulta de Sillas por Cédula</title>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script> <!-- Biblioteca gratuita para leer CSV -->
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        input, button { padding: 10px; margin: 10px 0; }
+        #resultado { margin-top: 20px; border: 1px solid #ccc; padding: 10px; }
+    </style>
 </head>
 <body>
-    <h2>Consulta de Sillas por Cédula</h2>
+    <h1>Consulta por Cédula</h1>
+    <input type="text" id="cedula" placeholder="Ingresa la Cédula">
+    <button onclick="buscar()">Buscar</button>
+    <div id="resultado"></div>
 
-    <input type="text" id="cedulaInput" placeholder="Ingrese la cédula">
-    <button onclick="buscarCedula()">Buscar</button>
+    <script>
+        function buscar() {
+            const cedula = document.getElementById('cedula').value.trim();
+            if (!cedula) {
+                alert('Ingresa una cédula válida');
+                return;
+            }
 
-    <pre id="resultado"></pre>
+            const url = 'https://raw.githubusercontent.com/cbarrazah/DESFILE/main/LISTADO.csv
+'; // Reemplaza con tu URL raw de GitHub
 
-<script>
-const excelURL = "https://raw.githubusercontent.com/cbarrazah/DESFILE/35e56dcc8bc43fa4a3f269379acfde7233dd0ea2/LISTADO.xlsx
-";
-
-let datos = [];
-
-// Cargar Excel al iniciar
-fetch(excelURL)
-  .then(res => res.arrayBuffer())
-  .then(buffer => {
-      const excel = XLSX.read(buffer, { type: "array" });
-      const primeraHoja = excel.Sheets[excel.SheetNames[0]];
-      datos = XLSX.utils.sheet_to_json(primeraHoja);
-      console.log("Datos cargados:", datos);
-      console.log("Columnas detectadas:", Object.keys(datos[0]));
-  });
-
-function buscarCedula() {
-    const cedula = document.getElementById("cedulaInput").value.trim();
-    const resultado = datos.find(fila => fila.CEDULA == cedula);
-
-    document.getElementById("resultado").textContent = resultado
-        ? JSON.stringify(resultado, null, 2)
-        : "No se encontró esta cédula.";
-}
-</script>
+            Papa.parse(url, {
+                download: true,
+                header: true,
+                complete: function(results) {
+                    const datos = results.data;
+                    const fila = datos.find(row => row.CEDULA && row.CEDULA.trim() === cedula);
+                    
+                    const resultadoDiv = document.getElementById('resultado');
+                    if (fila) {
+                        resultadoDiv.innerHTML = `
+                            <p><strong>Consecutivo:</strong> ${fila.CONSECUTIVO || 'N/A'}</p>
+                            <p><strong>Asociado:</strong> ${fila.ASOCIADO || 'N/A'}</p>
+                            <p><strong>Cédula:</strong> ${fila.CEDULA || 'N/A'}</p>
+                            <p><strong>Evento:</strong> ${fila.EVENTO || 'N/A'}</p>
+                            <p><strong>Dirección:</strong> ${fila.DIRECCION || 'N/A'}</p>
+                            <p><strong>Cant. de Sillas:</strong> ${fila['CANT. DE SILLAS'] || 'N/A'}</p>
+                            <p><strong>Asociación:</strong> ${fila.ASOCIACIÓN || 'N/A'}</p>
+                        `;
+                    } else {
+                        resultadoDiv.innerHTML = '<p>No se encontró información para esta cédula.</p>';
+                    }
+                },
+                error: function(error) {
+                    alert('Error al cargar los datos: ' + error);
+                }
+            });
+        }
+    </script>
 </body>
 </html>
