@@ -191,34 +191,58 @@ for index, fila in df.iterrows():
     )
     y = draw_wrapped_paragraph(c, verif, left, y, max_width, size=8.8, leading=10.5)
     y -= 20
-
-    # === CIERRE FINAL: FIRMA MUY ABAJO ===
+    # === CIERRE FINAL: FECHA + FIRMA + CARGO ===
     c.setFont("Helvetica", 9)
-    c.drawString(left, y, "Dado en Barranquilla D.E.I.P., el 5 de diciembre de 2025")
-    y -= 60  # Aumentado para dos saltos de línea (equivalente a ~2 líneas vacías)
+    c.drawString(left, y, "Dado en Barranquilla D.E.I.P., a los 5 días del mes de diciembre de 2025")
+    y -= 90  # Espacio limpio entre fecha y firma
 
-
-
-    if os.path.exists(FIRMA_FINAL):
+    # ─────── FIRMA DIGITAL (ENCIMA DEL NOMBRE) ───────
+    firma_path = FIRMA_FINAL  # Ya está definida al inicio como FirmaNelson.png
+    
+    if os.path.exists(firma_path):
         try:
-            img = PILImage.open(FIRMA_FINAL).convert("RGBA")
-            bg = PILImage.new("RGBA", img.size, (255,255,255,255))
-            img = PILImage.alpha_composite(bg, img).convert("RGB")
-            w, h = 200, 40
-            x = (width - w) / 2
-            fy = y - h
-         
+            # Cargar y limpiar fondo transparente (si lo tiene)
+            img = PILImage.open(firma_path).convert("RGBA")
+            # Fondo blanco forzoso para que no quede negro al imprimir
+            background = PILImage.new("RGBA", img.size, (255, 255, 255, 255))
+            img = PILImage.alpha_composite(background, img).convert("RGB")
+            
+            # Tamaño deseado de la firma (ajusta si quieres más grande/más pequeña)
+            ancho_firma = 220          # píxeles (aumenta o reduce según tu imagen)
+            alto_firma  = 70           # mantiene proporción automáticamente
+            
+            # Centrar horizontalmente
+            x_firma = (width - ancho_firma) / 2
+            
+            # Posicionar justo encima del nombre (el nombre estará ~10 puntos más abajo)
+            y_firma = y + 10
+            
+            c.drawImage(
+                ImageReader(img),
+                x_firma, y_firma,
+                width=ancho_firma,
+                height=alto_firma,
+                preserveAspectRatio=True,
+                mask='auto'  # ayuda con transparencias
+            )
+            
+            # Ajustar y para que el nombre quede debajo de la firma
+            y = y_firma - 15
+            
         except Exception as e:
-            print(f"Error firma: {e}")
-            y -= 30
+            print(f"Error al cargar la firma {firma_path}: {e}")
+            y -= 40  # fallback si falla la imagen
     else:
-        y -= 30
+        print(f"No se encontró la firma: {firma_path}")
+        y -= 40
 
+    # ─────── NOMBRE Y CARGO (DEBajo de la firma) ───────
     c.setFont("Helvetica-Bold", 11)
-    c.drawCentredString(width/2, y, "NELSON ENRIQUE PATRON PEREZ")
+    c.drawCentredString(width / 2, y, "NELSON ENRIQUE PATRON PÉREZ")
     y -= 16
-    c.setFont("Helvetica",10 )
-    c.drawCentredString(width/2, y, "SECRETARIO DE CONTROL URBANO Y ESPACIO PÚBLICO")
+    c.setFont("Helvetica", 10)
+    c.drawCentredString(width / 2, y, "SECRETARIO DE CONTROL URBANO Y ESPACIO PÚBLICO")
+
 
     c.showPage()
     c.save()
