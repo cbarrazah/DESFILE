@@ -27,6 +27,7 @@ fetch(excelURL)
       const primeraHoja = excel.Sheets[excel.SheetNames[0]];
       datos = XLSX.utils.sheet_to_json(primeraHoja);
       console.log("Datos cargados:", datos);
+      console.log("Columnas detectadas:", Object.keys(datos[0]));
   });
 
 function buscarCedula() {
